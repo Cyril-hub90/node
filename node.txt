@@ -1,0 +1,92 @@
+﻿const express = require('express');
+const path = require('path');
+const app = express();
+const port = 3000;
+
+// Built-in body parser
+app.use(express.urlencoded({ extended: true }));
+
+// View engine setup
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+// Static price list
+const priceList = {
+  apple: 10,
+  orange: 15,
+  banana: 8
+};
+
+let items = [];
+
+// Render form and items
+app.get('/', (req, res) => {
+  res.render('index', { items, priceList });
+});
+
+// Handle form submit
+app.post('/add', (req, res) => {
+  const { item, quantity } = req.body;
+  const price = priceList[item];
+  const total = price * quantity;
+
+  items.push({ item, price, quantity: Number(quantity), total });
+  console.log(items); // Display array in console
+
+  res.redirect('/');
+});
+
+// Start server
+app.listen(port, () => console.log(`Server running at http://localhost:${port}`));
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Static Item Form</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 30px; }
+    form { margin-bottom: 20px; }
+    select, input, button { padding: 6px; margin: 5px; }
+    table { width: 60%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #f2f2f2; }
+  </style>
+</head>
+<body>
+  <h2>Add Item</h2>
+  <form action="/add" method="POST">
+    <select name="item" required>
+      <% for (let key in priceList) { %>
+        <option value="<%= key %>">
+          <%= key.charAt(0).toUpperCase() + key.slice(1) %> - ₱<%= priceList[key] %>
+        </option>
+      <% } %>
+    </select>
+    <input type="number" name="quantity" placeholder="Quantity" required min="1">
+    <button type="submit">Add</button>
+  </form>
+
+  <% if (items.length > 0) { %>
+    <h3>Item List</h3>
+    <table>
+      <tr>
+        <th>Item</th>
+        <th>Price (₱)</th>
+        <th>Quantity</th>
+        <th>Total (₱)</th>
+      </tr>
+      <% items.forEach(i => { %>
+        <tr>
+          <td><%= i.item %></td>
+          <td><%= i.price %></td>
+          <td><%= i.quantity %></td>
+          <td><%= i.total %></td>
+        </tr>
+      <% }) %>
+    </table>
+  <% } else { %>
+    <p>No items added yet.</p>
+  <% } %>
+</body>
+</html>
+
